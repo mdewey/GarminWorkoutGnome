@@ -2,92 +2,116 @@
 
 Console.WriteLine("Ready, set, go!");
 
-var fifteenSeconds = 15000;
-var thirtySeconds = 30000;
-var fortyFiveSeconds = 45000;
-var oneMinute = 60000;
-var twoMinutes = 120000;
-var fiveMinutes = 300000;
-var sevenMinutes = 420000;
-var tenMinutes = 600000;
-
-var day1 = new string[] { $"recover, Recover Pace, {fiveMinutes}" };
-
-var day1Workouts = day1.Select(s =>
+// read from workouts.md line by line
+// if line starts with ## then create a new workout  
+var path = "workouts.md";
+var weeklyWorkouts = new List<DailyWorkout>();
+DailyWorkout? workout = null;
+foreach (string line in System.IO.File.ReadLines(path))
 {
-  return WorkoutService.CreateNikeWorkOutFromString(s);
-}).ToList();
-
-WorkoutService.CreateNikeWorkOut("N.5k.1.1.recovery", day1Workouts);
-
-
-var day2 = new List<string> {
-  $"warmup, Warm up the legs, {fiveMinutes}",
-};
-
-var repeats = 8;
-for (int i = 1; i <= repeats; i++)
-{
-  day2.Add($"run, Run 5k pace - {i}/{repeats}, {oneMinute}");
-  day2.Add($"recover, Recover - {i}/{repeats}, {oneMinute}");
+  if (line == null || line == "") continue;
+  System.Console.WriteLine(line);
+  if (line.StartsWith("##"))
+  {
+    if (workout != null)
+    {
+      weeklyWorkouts.Add(workout);
+    }
+    workout = new DailyWorkout();
+    workout.Title = line.Replace("##", "").Trim();
+  }
+  else if (line.StartsWith("warmup,"))
+  {
+    if (workout != null)
+    {
+      workout.WarmUp = WorkoutService.PopulateDistancesInWorkOut(line);
+    }
+  }
+  else if (line.StartsWith("cooldown"))
+  {
+    if (workout != null)
+    {
+      workout.CoolDown = WorkoutService.PopulateDistancesInWorkOut(line);
+    }
+  }
+  else if (line.StartsWith("run"))
+  {
+    if (workout != null)
+    {
+      if (workout.Workouts == null)
+      {
+        workout.Workouts = new List<string>();
+      }
+      workout.Workouts.Add(WorkoutService.PopulateDistancesInWorkOut(line).Trim());
+    }
+  }
+  else if (line.StartsWith('x'))
+  {
+    if (workout != null)
+    {
+      if (workout.Workouts == null)
+      {
+        workout.Workouts = new List<string>();
+      }
+      // split on the | 
+      var splits = line.Split('|');
+      var repeats = Int32.Parse(splits[0].Replace("x", "").Trim());
+      var workoutLine = splits.Skip(1);
+      for (var i = 0; i < repeats; i++)
+      {
+        foreach (var w in workoutLine)
+        {
+          workout.Workouts.Add(
+            WorkoutService.PopulateDistancesInWorkOut(
+              w
+              .Replace("[i]", (i + 1).ToString())
+              .Replace("[total]", repeats.ToString()))
+            .Trim());
+        }
+      }
+    }
+  }
+  else if (line.StartsWith("between:"))
+  {
+    if (workout != null)
+    {
+      if (workout.Workouts == null)
+      {
+        workout.Workouts = new List<string>();
+      }
+      var between = line.Replace("between:", "").Trim();
+      var newList = new List<string>();
+      var counter = 1;
+      foreach (var w in workout.Workouts)
+      {
+        newList.Add(w);
+        newList.Add(
+          WorkoutService.PopulateDistancesInWorkOut(
+            between
+            .Replace("[i]", counter.ToString())
+            .Replace("[total]", workout.Workouts.Count.ToString())));
+        counter++;
+      }
+      workout.Workouts = newList;
+    }
+  }
 }
-day2.Add($"cooldown, Cool down the legs, {fiveMinutes}");
-
-var day2Workouts = day2.Select(s =>
+if (workout != null)
 {
-  return WorkoutService.CreateNikeWorkOutFromString(s);
-}).ToList();
-
-WorkoutService.CreateNikeWorkOut("N.5k.1.2.speed", day1Workouts);
-
-var day3 = new string[] { $"recover, Recover Pace, {sevenMinutes}" };
-var day3Workouts = day3.Select(s =>
+  weeklyWorkouts.Add(workout);
+}
+// print out the weekly workouts
+foreach (DailyWorkout wo in weeklyWorkouts)
 {
-  return WorkoutService.CreateNikeWorkOutFromString(s);
-}).ToList();
-WorkoutService.CreateNikeWorkOut("N.5k.1.3.recovery", day3Workouts);
-
-var day4 = new List<string> {
-  $"warmup, Warm up the legs, {fiveMinutes}"
-  };
-var day4Intervals = new List<string> {
-  $"run, Run 5k pace, {oneMinute}",
-  $"run, Run 10k pace, {twoMinutes}",
-  $"run, Run 5k pace, {oneMinute}",
-  $"run, Mile Pace, {fortyFiveSeconds}",
-  $"run, Mile Pace, {fortyFiveSeconds}",
-  $"run, 10k Pace, {twoMinutes}",
-  $"run, 5k Pace, {oneMinute}",
-  $"run, Mile Pace, {fortyFiveSeconds}",
-  $"run, Best Pace, {thirtySeconds}",
-  $"run, Best Pace, {fifteenSeconds}",
-  };
-
-var counter = 1;
-foreach (var interval in day4Intervals)
-{
-  day4.Add(interval);
-  day4.Add(
-    $"recover, Recover {counter}/{day4Intervals.Count}, {oneMinute}"
-  );
-  counter++;
+  Console.WriteLine("----------");
+  System.Console.WriteLine(wo.Title);
+  System.Console.WriteLine(wo.WarmUp);
+  foreach (string w in wo.Workouts)
+  {
+    System.Console.WriteLine(w);
+  }
+  System.Console.WriteLine(wo.CoolDown);
+  WorkoutService.CreateNikeWorkOut(wo.Title, wo.GetWorkOut());
 }
 
-day4.Add($"cooldown, Good Job - cool down, {fiveMinutes}");
 
-var day4Workouts = day4.Select(s =>
-{
-  return WorkoutService.CreateNikeWorkOutFromString(s);
-}).ToList();
-WorkoutService.CreateNikeWorkOut("N.5k.1.4.speed", day4Workouts);
-
-var day5 = new List<string> {
-  $"warmup, Warm up the legs, {fiveMinutes}",
-  $"run, 1 mile, {tenMinutes}",
-  };
-
-var day5Workouts = day5.Select(s =>
-{
-  return WorkoutService.CreateNikeWorkOutFromString(s);
-}).ToList();
-WorkoutService.CreateNikeWorkOut("N.5k.1.5.longrun", day5Workouts);

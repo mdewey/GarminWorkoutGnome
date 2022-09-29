@@ -2,10 +2,41 @@ using Dynastream.Fit;
 
 public class WorkoutService
 {
+
+  static public string PopulateDistancesInWorkOut(string s)
+  {
+    var lookUpTable = new Dictionary<string, string>{
+      {"1miles", "160935"},
+      {"2miles", "321870"},
+      {"3miles", "482805"},
+      {"4miles", "643740"},
+      {"1K", "100000"},
+      {"5k", "50000"},
+      {"15secs", "15000"},
+      {"30secs", "30000"},
+      {"45secs" , "45000"},
+      {"1mins" , "60000"},
+      {"2mins" , "120000"},
+      {"3mins" , "180000"},
+      {"4mins" , "240000"},
+      {"5mins" , "300000"},
+      {"6mins" , "360000"},
+      {"7mins" , "420000"},
+    };
+    foreach (var item in lookUpTable)
+    {
+      s = s.Replace($"[{item.Key}]", item.Value);
+    }
+    return s;
+
+  }
+
   static public NikeWorkOut CreateNikeWorkOutFromString(string s)
   {
     var parts = s.Split(',');
     var intensity = Intensity.Recovery;
+    var durationType = parts[2].Trim() == "time" ? WktStepDuration.Time : WktStepDuration.Distance;
+
     if (parts[0] == "recover")
     {
       intensity = Intensity.Recovery;
@@ -28,13 +59,12 @@ public class WorkoutService
     }
     return new NikeWorkOut
     {
-      Time = uint.Parse(parts[2]),
+      Duration = uint.Parse(parts[3]),
+      DurationType = durationType,
       Description = parts[1],
       Intensity = intensity
     };
   }
-
-
 
   static public void CreateNikeWorkOut(string title, List<NikeWorkOut> workOuts)
   {
@@ -46,8 +76,8 @@ public class WorkoutService
                                          name: workOut.Description,
                                          notes: workOut.Description,
                                          intensity: workOut.Intensity,
-                                         durationType: WktStepDuration.Time,
-                                         durationValue: workOut.Time
+                                         durationType: workOut.DurationType,
+                                         durationValue: workOut.Duration
                         ));
     }
 
@@ -105,9 +135,7 @@ public class WorkoutService
     CreateWorkout(workoutMesg, workoutSteps);
   }
 
-
-  static public WorkoutStepMesg CreateWorkoutStep(
-          int messageIndex,
+  static public WorkoutStepMesg CreateWorkoutStep(int messageIndex,
           String name = null,
           String notes = null,
           Intensity intensity = Intensity.Active,
