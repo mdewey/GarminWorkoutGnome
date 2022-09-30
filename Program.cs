@@ -4,13 +4,12 @@ Console.WriteLine("Ready, set, go!");
 
 // read from workouts.md line by line
 // if line starts with ## then create a new workout  
-var path = "workouts.md";
+var path = "nike-5k.md";
 var weeklyWorkouts = new List<DailyWorkout>();
 DailyWorkout? workout = null;
 foreach (string line in System.IO.File.ReadLines(path))
 {
   if (line == null || line == "") continue;
-  System.Console.WriteLine(line);
   if (line.StartsWith("##"))
   {
     if (workout != null)

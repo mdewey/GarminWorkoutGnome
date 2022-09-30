@@ -10,18 +10,35 @@ public class WorkoutService
       {"2miles", "321870"},
       {"3miles", "482805"},
       {"4miles", "643740"},
-      {"1K", "100000"},
-      {"5k", "50000"},
+      {"1k", "100000"},
+      {"5k", "500000"},
       {"15secs", "15000"},
       {"30secs", "30000"},
       {"45secs" , "45000"},
+      {"60secs" , "60000"},
+      {"75secs", "75000"},
+      {"90secs", "90000"},
       {"1mins" , "60000"},
+      {"1:15mins", "75000"},
+      {"1.5mins", "90000"},
       {"2mins" , "120000"},
+      {"2.5mins","150000"},
       {"3mins" , "180000"},
       {"4mins" , "240000"},
       {"5mins" , "300000"},
       {"6mins" , "360000"},
       {"7mins" , "420000"},
+      {"8mins" , "480000"},
+      {"10mins", "600000"},
+      {"11mins", "660000"},
+      {"12mins", "720000"},
+      {"15mins", "900000"},
+      {"20mins", "1200000"},
+      {"25mins", "1500000"},
+      {"30mins", "1800000"},
+      {"31mins", "1860000"},
+      {"33mins", "1980000"},
+      {"35mins", "2100000"},
     };
     foreach (var item in lookUpTable)
     {
@@ -34,6 +51,10 @@ public class WorkoutService
   static public NikeWorkOut CreateNikeWorkOutFromString(string s)
   {
     var parts = s.Split(',');
+    if (parts.Count() != 4 || s.Contains("[") || s.Contains("]"))
+    {
+      throw new Exception("Invalid workout line, " + s);
+    }
     var intensity = Intensity.Recovery;
     var durationType = parts[2].Trim() == "time" ? WktStepDuration.Time : WktStepDuration.Distance;
 
@@ -57,13 +78,23 @@ public class WorkoutService
     {
       intensity = Intensity.Rest;
     }
-    return new NikeWorkOut
+    try
     {
-      Duration = uint.Parse(parts[3]),
-      DurationType = durationType,
-      Description = parts[1],
-      Intensity = intensity
-    };
+      return new NikeWorkOut
+      {
+        Duration = uint.Parse(parts[3]),
+        DurationType = durationType,
+        Description = parts[1],
+        Intensity = intensity
+      };
+    }
+    catch (Exception e)
+    {
+      Console.WriteLine(e);
+      Console.WriteLine(s);
+      throw e;
+    }
+
   }
 
   static public void CreateNikeWorkOut(string title, List<NikeWorkOut> workOuts)
