@@ -4,9 +4,12 @@ Console.WriteLine("Ready, set, go!");
 
 // read from workouts.md line by line
 // if line starts with ## then create a new workout  
-var path = "nike-5k.md";
+// var path = "nike-5k.md";
+// var path = "src/running/nike-5k.md";
+var path = "src/climbing/hangboard.quick.md";
 var weeklyWorkouts = new List<DailyWorkout>();
 DailyWorkout? workout = null;
+Dynastream.Fit.Sport sport = Dynastream.Fit.Sport.All;
 foreach (string line in System.IO.File.ReadLines(path))
 {
   if (line == null || line == "") continue;
@@ -18,6 +21,17 @@ foreach (string line in System.IO.File.ReadLines(path))
     }
     workout = new DailyWorkout();
     workout.Title = line.Replace("##", "").Trim();
+  }
+  else if (line.StartsWith(">"))
+  {
+    if (line.Contains("RockClimbing"))
+    {
+      sport = Dynastream.Fit.Sport.RockClimbing;
+    }
+    else if (line.Contains("Running"))
+    {
+      sport = Dynastream.Fit.Sport.Running;
+    }
   }
   else if (line.StartsWith("warmup,"))
   {
@@ -33,7 +47,7 @@ foreach (string line in System.IO.File.ReadLines(path))
       workout.CoolDown = WorkoutService.PopulateDistancesInWorkOut(line);
     }
   }
-  else if (line.StartsWith("run"))
+  else if (line.StartsWith("run") || line.StartsWith("active"))
   {
     if (workout != null)
     {
@@ -105,12 +119,15 @@ foreach (DailyWorkout wo in weeklyWorkouts)
   Console.WriteLine("----------");
   System.Console.WriteLine(wo.Title);
   System.Console.WriteLine(wo.WarmUp);
-  foreach (string w in wo.Workouts)
+  if (wo.Workouts != null)
   {
-    System.Console.WriteLine(w);
+    foreach (var w in wo.Workouts)
+    {
+      System.Console.WriteLine(w);
+    }
   }
   System.Console.WriteLine(wo.CoolDown);
-  WorkoutService.CreateNikeWorkOut(wo.Title, wo.GetWorkOut());
+  WorkoutService.CreateNikeWorkOut(wo.Title, sport, wo.GetWorkOut());
 }
 
 

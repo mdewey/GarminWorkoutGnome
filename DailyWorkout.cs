@@ -1,8 +1,8 @@
 public class DailyWorkout
 {
-  public string? Title { get; set; }
+  public string Title { get; set; } = "Unknown title";
 
-  public List<string>? Workouts { get; set; }
+  public List<string>? Workouts { get; set; } = new List<string>();
 
   public string? WarmUp { get; set; }
   public string? CoolDown { get; set; }

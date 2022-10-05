@@ -62,7 +62,7 @@ public class WorkoutService
     {
       intensity = Intensity.Recovery;
     }
-    else if (parts[0] == "run")
+    else if (parts[0] == "run" || parts[0] == "active")
     {
       intensity = Intensity.Active;
     }
@@ -92,12 +92,13 @@ public class WorkoutService
     {
       Console.WriteLine(e);
       Console.WriteLine(s);
+
       throw e;
     }
 
   }
 
-  static public void CreateNikeWorkOut(string title, List<NikeWorkOut> workOuts)
+  static public void CreateNikeWorkOut(string title, Sport sport, List<NikeWorkOut> workOuts)
   {
     var workoutSteps = new List<WorkoutStepMesg>();
 
@@ -117,58 +118,16 @@ public class WorkoutService
 
     var workoutMesg = new WorkoutMesg();
     workoutMesg.SetWktName(title);
-    workoutMesg.SetSport(Sport.Running);
+    workoutMesg.SetSport(sport);
     workoutMesg.SetSubSport(SubSport.Invalid);
     workoutMesg.SetNumValidSteps((ushort)workoutSteps.Count);
 
     CreateWorkout(workoutMesg, workoutSteps);
   }
 
-  static public void CreateRun800RepeatsWorkout()
-  {
-    var workoutSteps = new List<WorkoutStepMesg>();
-
-    workoutSteps.Add(CreateWorkoutStep(messageIndex: workoutSteps.Count,
-                                        durationType: WktStepDuration.Distance,
-                                        durationValue: 400000, // centimeters
-                                        targetType: WktStepTarget.HeartRate,
-                                        targetValue: 1,
-                                        intensity: Intensity.Warmup));
-
-    workoutSteps.Add(CreateWorkoutStep(messageIndex: workoutSteps.Count,
-                                        durationType: WktStepDuration.Distance,
-                                        durationValue: 80000, // centimeters
-                                        targetType: WktStepTarget.HeartRate,
-                                        targetValue: 4));
-
-    workoutSteps.Add(CreateWorkoutStep(messageIndex: workoutSteps.Count,
-                                        durationType: WktStepDuration.Distance,
-                                        durationValue: 20000, // centimeters
-                                        targetType: WktStepTarget.HeartRate,
-                                        targetValue: 2,
-                                        intensity: Intensity.Rest));
-
-    workoutSteps.Add(CreateWorkoutStepRepeat(messageIndex: workoutSteps.Count, repeatFrom: 1, repetitions: 5));
-
-    workoutSteps.Add(CreateWorkoutStep(messageIndex: workoutSteps.Count,
-                                        durationType: WktStepDuration.Distance,
-                                        durationValue: 100000, // centimeters
-                                        targetType: WktStepTarget.HeartRate,
-                                        targetValue: 2,
-                                        intensity: Intensity.Cooldown));
-
-    var workoutMesg = new WorkoutMesg();
-    workoutMesg.SetWktName("Running 800m Repeats");
-    workoutMesg.SetSport(Sport.Running);
-    workoutMesg.SetSubSport(SubSport.Invalid);
-    workoutMesg.SetNumValidSteps((ushort)workoutSteps.Count);
-
-    CreateWorkout(workoutMesg, workoutSteps);
-  }
-
-  static public WorkoutStepMesg CreateWorkoutStep(int messageIndex,
-          String name = null,
-          String notes = null,
+  static public WorkoutStepMesg? CreateWorkoutStep(int messageIndex,
+          String? name = null,
+          String? notes = null,
           Intensity intensity = Intensity.Active,
           WktStepDuration durationType = WktStepDuration.Open,
           uint? durationValue = null,
@@ -253,9 +212,18 @@ public class WorkoutService
     fileIdMesg.SetProduct(productId);
     fileIdMesg.SetTimeCreated(new Dynastream.Fit.DateTime(System.DateTime.UtcNow));
     fileIdMesg.SetSerialNumber(serialNumber);
+    Console.WriteLine(workoutMesg.GetSport());
 
     // Create the output stream, this can be any type of stream, including a file or memory stream. Must have read/write access
-    FileStream fitDest = new FileStream($"workouts/{workoutMesg.GetWktNameAsString().Replace(' ', '_')}.fit", FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+    // create directory if it doesn't exist
+    var dir = $"workouts/{workoutMesg.GetSport()}";
+    Console.WriteLine(dir);
+
+    if (!Directory.Exists(dir))
+    {
+      Directory.CreateDirectory(dir);
+    }
+    FileStream fitDest = new FileStream($"workouts/{workoutMesg.GetSport()}/{workoutMesg.GetWktNameAsString().Replace(' ', '_')}.fit", FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
 
     // Create a FIT Encode object
     Encode encoder = new Encode(ProtocolVersion.V10);
